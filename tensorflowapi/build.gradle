@@ -43,6 +43,7 @@ dependencies {
     compileOnly 'org.firstinspires.ftc:RobotCore:6.2.1'
     implementation 'org.tensorflow:tensorflow-lite:2.5.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
-    implementation 'org.tensorflow:tensorflow-lite-metadata:0.0.0-nightly-SNAPSHOT'
+    implementation 'org.tensorflow:tensorflow-lite-task-vision:0.1.0'
+    implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc2'
     implementation 'org.openftc:easyopencv:1.4.4'
 }

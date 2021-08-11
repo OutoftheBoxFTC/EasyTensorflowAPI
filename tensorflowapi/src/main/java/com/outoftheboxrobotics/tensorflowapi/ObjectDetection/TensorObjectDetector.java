@@ -4,7 +4,6 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
-import android.os.Trace;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -24,7 +23,7 @@ import java.util.Map;
 public class TensorObjectDetector {
     private final Interpreter interpreter;
     private final boolean quantized;
-    private final int width, height, numRecognitions;
+    private final int width, height, numDetections;
 
     private final int[] intValues;
     private final ByteBuffer buffer;
@@ -39,7 +38,7 @@ public class TensorObjectDetector {
 
         this.width = this.interpreter.getInputTensor(0).shape()[1];
         this.height = this.interpreter.getInputTensor(0).shape()[2];
-        this.numRecognitions = this.interpreter.getOutputTensor(0).shape()[1];
+        this.numDetections = this.interpreter.getOutputTensor(0).shape()[1];
 
         this.intValues = new int[this.width * this.height];
         this.buffer = ByteBuffer.allocateDirect(this.width * this.height * 3 * (quantized ? 1 : 4));
@@ -48,7 +47,7 @@ public class TensorObjectDetector {
         this.labels = labels;
     }
 
-    public List<Recognition> recognize(Bitmap bitmap){
+    public List<Detection> recognize(Bitmap bitmap){
         Bitmap clone = bitmap.copy(bitmap.getConfig(), true);
         if(bitmap.getWidth() != width || bitmap.getHeight() != height){
             clone = Bitmap.createScaledBitmap(bitmap, width, height, false);
@@ -74,9 +73,9 @@ public class TensorObjectDetector {
         }
 
         Object[] inputArray = {buffer};
-        float[][][] outputLocations = new float[1][numRecognitions][4];
-        float[][] outputClasses = new float[1][numRecognitions];
-        float[][] outputScores = new float[1][numRecognitions];
+        float[][][] outputLocations = new float[1][numDetections][4];
+        float[][] outputClasses = new float[1][numDetections];
+        float[][] outputScores = new float[1][numDetections];
         float[] numDetections = new float[1];
 
         Map<Integer, Object> outputMap = new HashMap<>();
@@ -87,9 +86,9 @@ public class TensorObjectDetector {
 
         interpreter.runForMultipleInputsOutputs(inputArray, outputMap);
 
-        int numDetectionsOutput = Math.min(numRecognitions, (int) numDetections[0]);
+        int numDetectionsOutput = Math.min(this.numDetections, (int) numDetections[0]);
 
-        final ArrayList<Recognition> recognitions = new ArrayList<>(numDetectionsOutput);
+        final ArrayList<Detection> detections = new ArrayList<>(numDetectionsOutput);
         for (int i = 0; i < numDetectionsOutput; ++i) {
             final RectF detection = new RectF(
                             outputLocations[0][i][1] * width,
@@ -97,12 +96,12 @@ public class TensorObjectDetector {
                             outputLocations[0][i][3] * width,
                             outputLocations[0][i][2] * height);
 
-            recognitions.add(
-                    new Recognition(
+            detections.add(
+                    new Detection(
                             "" + i, labels[((int) outputClasses[0][i])], outputScores[0][i], detection, bitmap, timestamp));
         }
         clone.recycle();
-        return recognitions;
+        return detections;
     }
 
     private static MappedByteBuffer loadModelFile(AssetManager assets, String modelFilename)
@@ -115,7 +114,7 @@ public class TensorObjectDetector {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-    public static class Recognition {
+    public static class Detection {
         private final String id;
 
         private final String title;
@@ -128,7 +127,7 @@ public class TensorObjectDetector {
 
         private final long imageTimestamp;
 
-        public Recognition(
+        public Detection(
                 final String id, final String title, final Float confidence, final RectF location, Bitmap bitmap, long imageTimestamp) {
             this.id = id;
             this.title = title;
