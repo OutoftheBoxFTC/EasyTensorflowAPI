@@ -67,6 +67,9 @@ public class TensorImageClassifier {
         this.probabilityProcessor = new TensorProcessor.Builder().add(quantized ? new NormalizeOp(0, 255) : new NormalizeOp(0, 1)).build();
 
         this.labels = labels;
+        if(numRecognitions == 0){
+            numRecognitions = labels.length;
+        }
         this.numRecognitions = numRecognitions;
     }
     //TODO: Validate that the Tensor Image Classifier works

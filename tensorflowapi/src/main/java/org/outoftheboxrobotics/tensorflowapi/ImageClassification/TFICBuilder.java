@@ -24,7 +24,7 @@ public class TFICBuilder {
         options = new Interpreter.Options();
         labels = new String[0];
         options.setCancellable(true);
-        this.numRecognitions = 10;
+        this.numRecognitions = 0;
     }
 
     /**

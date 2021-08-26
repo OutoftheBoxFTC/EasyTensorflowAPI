@@ -1,24 +1,24 @@
-# TensorflowObjectDetector Overview
+# TensorflowImageClassifier Overview
 
-### What is object detection?
+### What is image classification?
 
-Object detection is an AI task where a model takes in an image and find the location of certain objects within the image.
+Image classification is an AI task where a model takes in an image and tries to determine a label for the image.
 
-This is useful for tasks where the 2d location of an object is needed to perform some task, like shooting objects into a goal or finding game elements on the ground
+This is useful for tasks where you need to know something about what is in an image, such as if there are 0, 1, or 4 objects in a stack or if an intake has cubes or balls in it.
 
 ### What models are supported?
 
-All Tensorflow 2.0 models that are based on the SSD (Single Shot Detector) architecture can be run using this API.
+Most Tensorflow 2.0 models can be run using this API.
 
 Tensorflow 1.0 models are theoretically supported with back compatibility, but I would highly suggest using Tensorflow 2.0 models for accuracy and inference time reasons
 
-### Creating a TensorObjectDetector instance
+### Creating a TensorImageClassifier instance
 
-TensorObjectDetector instances are created using the 'TFODBuilder'
+TensorImageClassifier instances are created using the 'TFICBuilder'
 
 Here is the most basic usage
 ```java
-TensorObjectDetector tfod = new TFODBuilder(hardwareMap, "model.tflite").setLabels("Label 1", "Label 2");
+TensorImageClassifier tfic = new TFICBuilder(hardwareMap, "model.tflite").setLabels("Label 1", "Label 2");
 ```
 
 In this example, we pass to it the hardwareMap, the name of our model in the **assets** folder of the FtcRobotController module ("model.tflite"), and the label(s) the model uses ("Label 1" and "Label 2")
@@ -27,6 +27,8 @@ However, the following options are also available in the builder
 
 **setLabels(String... labels)**: ***Important*** Sets the labels that the model will assign to the detections. This should match the labels that the model is trained on. For example, if you trained a model to detect "cubes" and "balls", you should pass "cubes", and "balls" here
 Order matters! The order of the labels here should match the order of the labels used to train
+
+**keepTopKResults(int numResults)**: Number of results to keep. By default, this should be greater then or equal to the length of the labels, but it can be lowered if you only want a certain number of results each time.
 
 **setQuantized(boolean quantized)**: ***Important*** Sets if the model is quantized.
 Quantization converts the model to use Integers instead of Floating-Point numbers
@@ -63,20 +65,12 @@ However, *only* using a GPU has the potential to cause crashes from unsupported 
 The model is run using the recognize() method
 This method has one parameter, the bitmap to run the model on
 
-The method returns a list of "detections" that the model finds on the image
+The method returns a list of "recognitions" that the model things the image contains
 
-Each detection has the following attributes
+Each recognition has the following attributes
 
 ID: A unique id for each recognition
 
 Title: The label of the recognition
 
-Confidence: The confidence level from 0-100% of the detection, basically how confident is the model that the detected object is in fact that object
-
-Location: A RectF of the bounding box of the object
-
-Bitmap: The image that the model was run on
-
-Timestamp: The system epoch time taken **right before the model was run**
-
-
+Confidence: The confidence level from 0-100% of the detection, basically how confident is the model the image fits the label
