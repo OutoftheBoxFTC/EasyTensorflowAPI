@@ -47,11 +47,19 @@ public class TensorObjectDetector {
         this.labels = labels;
     }
 
+    /**
+     * Runs inference on a given image
+     * @param bitmap the image to run the model on
+     * @return a list of detected objects in the image
+     */
     public List<Detection> recognize(Bitmap bitmap){
         Bitmap clone = bitmap.copy(bitmap.getConfig(), true);
         if(bitmap.getWidth() != width || bitmap.getHeight() != height){
+            //TODO: Tensorflow has a image pre-processor, validate using that over the createScaledBitmap option for performance
             clone = Bitmap.createScaledBitmap(bitmap, width, height, false);
         }
+
+        //preprocess image data from 0-255 int to either normalized float based or integer based
         clone.getPixels(intValues, 0, width, 0, 0, width, height);
 
         long timestamp = System.currentTimeMillis();
@@ -60,11 +68,11 @@ public class TensorObjectDetector {
         for(int i = 0; i < width; i ++){
             for(int j = 0; j < height; j ++){
                 int pixel = intValues[i * width + j];
-                if(quantized){
+                if(quantized){ //Quantization uses integers instead of floating point values
                     buffer.put((byte) ((pixel >> 16) & 0xFF));
                     buffer.put((byte) ((pixel >> 8) & 0xFF));
                     buffer.put((byte) (pixel & 0xFF));
-                }else{
+                }else{ //Non quantized model uses normalized floating point values
                     buffer.putFloat((((pixel >> 16) & 0xFF) - 127.5f) / 127.5f);
                     buffer.putFloat((((pixel >> 8) & 0xFF) - 127.5f) / 127.5f);
                     buffer.putFloat(((pixel & 0xFF) - 127.5f) / 127.5f);
@@ -72,7 +80,12 @@ public class TensorObjectDetector {
             }
         }
 
+        //Copy input buffer into a tensorflow readable object
         Object[] inputArray = {buffer};
+
+        //Copy output buffers into a tensorflow readable object map
+        //TODO: Verify order of operations here or make output tensor assignment automatic
+        //This is the most common order of output tensors, but there have been models with different output tensor orders
         float[][][] outputLocations = new float[1][numDetections][4];
         float[][] outputClasses = new float[1][numDetections];
         float[][] outputScores = new float[1][numDetections];
@@ -84,8 +97,11 @@ public class TensorObjectDetector {
         outputMap.put(2, outputScores);
         outputMap.put(3, numDetections);
 
+        //Run inference
         interpreter.runForMultipleInputsOutputs(inputArray, outputMap);
 
+        //Only process the number of outputs found by the model since some models will return less then numDetections detections
+        //Uses min because some models will return null detections greater then numDetections
         int numDetectionsOutput = Math.min(this.numDetections, (int) numDetections[0]);
 
         final ArrayList<Detection> detections = new ArrayList<>(numDetectionsOutput);

@@ -25,36 +25,82 @@ public class TFODBuilder {
         options.setCancellable(true);
     }
 
+    /**
+     * Sets if the model is quantized
+     *
+     * Quantization of a model processes the model so that it uses integer inputs instead of floating point inputs
+     * This speeds up inference on the model, but also (slightly) decreases accuracy
+     */
     public TFODBuilder setQuantized(boolean quantized){
         this.quantized = quantized;
         return this;
     }
 
+    /**
+     * Sets the labels that the model uses.
+     *
+     * This is the labels that the model use, like "ring" or "goal"
+     */
     public TFODBuilder setLabels(String... labels){
         this.labels = labels;
         return this;
     }
 
+    /**
+     * Number of threads that the model will use
+     *
+     * Generally, it is recommended to use somewhere between 1-4 threads
+     * On the Control Hub, it seems the most optimal number of threads is somewhere between 2-3
+     * The optimal number of threads may change depending on the model
+     */
     public TFODBuilder setNumThreads(int numThreads){
         this.options.setNumThreads(numThreads);
         return this;
     }
 
+    /**
+     * Sets if the XNNPack delegate is used
+     *
+     * XNNPack is a set of neural network operators that are highly optimized for running floating point models on ARM, x86, and WebAssembly
+     * This has the potential to run floating point (i.e non-quantized) models faster
+     */
     public TFODBuilder useXNNPack(boolean xnnPack){
         this.options.setUseXNNPACK(xnnPack);
         return this;
     }
 
-    public TFODBuilder useNNAPI(){
+    /**
+     * Uses a NNAPI delegate
+     *
+     * NNAPI utilizes dedicated hardware accelerators, such as Graphics Processing Units, Digital Signal Processors, or Neural Processing Units to speed up model inference
+     * NNAPI requires backend architecture to allow for acceleration
+     * At this time it is unknown if the FTC Control Hub allows for NNAPI acceleration
+     */
+    public TFODBuilder useNNAPI(){ //TODO: Test if the FTC Control Hub supports NNAPI acceleration
         this.options.setUseNNAPI(true);
         return this;
     }
 
-    public TFODBuilder allowBufferHandleOutput(){
-        this.options.setAllowBufferHandleOutput(true);
+    /**
+     * Sets if the buffer handle output is used
+     *
+     * By default, when using hardware acceleration, data is copied to the CPU buffer before reading
+     * Setting this value to FALSE allows for the device to attempt to read data directly from the hardware accelerated buffers
+     * This is not supported on all devices but may give an advantage in inference time when used on a supported device
+     */
+    public TFODBuilder allowBufferHandleOutput(boolean allow){
+        this.options.setAllowBufferHandleOutput(allow);
         return this;
     }
 
+    /**
+     * Uses GPU Acceleration
+     *
+     * NOTE: This is for legacy implementation, usage of NNAPI is high recommended instead of GPU acceleration
+     *
+     * If the device is capable of GPU (Graphics Processing Unit) Acceleration, it will be used
+     * Not all models can be GPU accelerated, and some may throw an error when run on a GPU
+     */
     public TFODBuilder useGPUAcceleration(){
         CompatibilityList compatList = new CompatibilityList();
 

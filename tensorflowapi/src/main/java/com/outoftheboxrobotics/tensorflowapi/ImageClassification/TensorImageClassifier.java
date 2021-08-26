@@ -69,7 +69,13 @@ public class TensorImageClassifier {
         this.labels = labels;
         this.numRecognitions = numRecognitions;
     }
+    //TODO: Validate that the Tensor Image Classifier works
 
+    /**
+     * Runs inference on a given image
+     * @param bitmap the image to run the model on
+     * @return a list possible recognitions for the image
+     */
     public List<Recognition> recognize(Bitmap bitmap){
         inputImageBuffer.load(bitmap);
 
@@ -81,12 +87,7 @@ public class TensorImageClassifier {
         interpreter.run(inputImageBuffer.getBuffer(), outputProbabilityBuffer.getBuffer().rewind());
 
         Map<String, Float> labeledProbability = new TensorLabel(Arrays.asList(labels), probabilityProcessor.process(outputProbabilityBuffer)).getMapWithFloatValue();
-        PriorityQueue<Recognition> pq = new PriorityQueue<>(numRecognitions, new Comparator<Recognition>() {
-            @Override
-            public int compare(Recognition o1, Recognition o2) {
-                return Float.compare(o2.getConfidence(), o1.getConfidence());
-            }
-        });
+        PriorityQueue<Recognition> pq = new PriorityQueue<>(numRecognitions, (o1, o2) -> Float.compare(o2.getConfidence(), o1.getConfidence()));
 
         for(Map.Entry<String, Float> entry : labeledProbability.entrySet()){
             pq.add(new Recognition("" + entry.getKey(), entry.getKey(), entry.getValue()));
