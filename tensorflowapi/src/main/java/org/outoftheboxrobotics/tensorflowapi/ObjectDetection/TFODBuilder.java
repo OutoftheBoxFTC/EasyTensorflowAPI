@@ -74,7 +74,7 @@ public class TFODBuilder {
      *
      * NNAPI utilizes dedicated hardware accelerators, such as Graphics Processing Units, Digital Signal Processors, or Neural Processing Units to speed up model inference
      * NNAPI requires backend architecture to allow for acceleration
-     * At this time it is unknown if the FTC Control Hub allows for NNAPI acceleration
+     * The FTC Control Hub seems to allow for NNAPI acceleration
      */
     public TFODBuilder useNNAPI(){ //TODO: Test if the FTC Control Hub supports NNAPI acceleration
         this.options.setUseNNAPI(true);
