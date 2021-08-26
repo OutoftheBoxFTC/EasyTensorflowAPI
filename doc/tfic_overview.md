@@ -69,8 +69,8 @@ The method returns a list of "recognitions" that the model things the image cont
 
 Each recognition has the following attributes
 
-ID: A unique id for each recognition
+**ID**: A unique id for each recognition
 
-Title: The label of the recognition
+**Title**: The label of the recognition
 
-Confidence: The confidence level from 0-100% of the detection, basically how confident is the model the image fits the label
+**Confidence**: The confidence level from 0-100% of the detection, basically how confident is the model the image fits the label

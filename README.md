@@ -12,10 +12,14 @@ The API supports loading models from the assets folder of FTCRobotController, se
 Models are all run on Bitmap inputs, allowing you to use a variety of camera input options, from the built in webcam api in the FTC Robot Controller to external solutions like EasyOpenCV
 
 ## Documentation:
-TensorImageClassifier: WIP
-TensorObjectDetector: WIP
+[TensorImageClassifier](https://github.com/OutoftheBoxFTC/EasyTensorflowAPI/blob/main/doc/tfic_overview.md)
+
+[TensorObjectDetector](https://github.com/OutoftheBoxFTC/EasyTensorflowAPI/blob/main/doc/tfod_overview.md)
+
 How to make a Tensorflow Object Detection Model: WIP
-How to make a Tensorflow Image Classification Model: WIP
+
+How to make a Tensorflow Image Classification Model:
+
 
 ## OnBotJava:
 This library can be ported to OnBotJava, however I strongly recommend anyone using this library to use it in Android Studio to avoid a lot of pain that will come from porting it.
