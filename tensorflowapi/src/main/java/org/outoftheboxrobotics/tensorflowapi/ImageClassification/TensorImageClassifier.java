@@ -1,4 +1,4 @@
-package com.outoftheboxrobotics.tensorflowapi.ImageClassification;
+package org.outoftheboxrobotics.tensorflowapi.ImageClassification;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;

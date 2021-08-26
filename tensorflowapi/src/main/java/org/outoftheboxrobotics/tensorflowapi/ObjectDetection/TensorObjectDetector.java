@@ -1,4 +1,4 @@
-package com.outoftheboxrobotics.tensorflowapi.ObjectDetection;
+package org.outoftheboxrobotics.tensorflowapi.ObjectDetection;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;

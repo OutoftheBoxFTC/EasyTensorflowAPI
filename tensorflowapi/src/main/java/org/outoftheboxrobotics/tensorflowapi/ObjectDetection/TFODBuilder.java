@@ -1,4 +1,4 @@
-package com.outoftheboxrobotics.tensorflowapi.ObjectDetection;
+package org.outoftheboxrobotics.tensorflowapi.ObjectDetection;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.RobotLog;

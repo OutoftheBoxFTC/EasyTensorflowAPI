@@ -1,6 +1,5 @@
-package com.outoftheboxrobotics.tensorflowapi.ImageClassification;
+package org.outoftheboxrobotics.tensorflowapi.ImageClassification;
 
-import com.outoftheboxrobotics.tensorflowapi.ObjectDetection.TensorObjectDetector;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.RobotLog;
 
