@@ -18,7 +18,7 @@ Models are all run on Bitmap inputs, allowing you to use a variety of camera inp
 
 How to make a Tensorflow Object Detection Model: WIP
 
-How to make a Tensorflow Image Classification Model:
+How to make a Tensorflow Image Classification Model: WIP
 
 
 ## OnBotJava:
