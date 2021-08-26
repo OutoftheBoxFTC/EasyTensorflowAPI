@@ -68,10 +68,15 @@ The method returns a list of "detections" that the model finds on the image
 Each detection has the following attributes
 
 ID: A unique id for each recognition
+
 Title: The label of the recognition
+
 Confidence: The confidence level from 0-100% of the detection, basically how confident is the model that the detected object is in fact that object
+
 Location: A RectF of the bounding box of the object
+
 Bitmap: The image that the model was run on
+
 Timestamp: The system epoch time taken **right before the model was run**
 
 
