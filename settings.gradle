@@ -1,4 +1,3 @@
 rootProject.name = "TensorflowAPI"
 include ':app'
 include ':tensorflowapi'
-include ':examples'
