@@ -6,6 +6,10 @@ FIRST provides a decent Tensorflow API already packaged in the app, but it curre
 
 In addition, due to the nature of tensorflow models, being able to see the implementation of Tensorflow allows for people to make much more specific models for FTC use
 
+## Disclaimer
+
+As of right now, the Tensor Image Classification system is UNTESTED, testing will come soon.
+
 ## Current Features:
 EasyTensorflowAPI currently supports both tensorflow object detection and tensorflow image classification models in the form of a .tflite model
 The API supports loading models from the assets folder of FTCRobotController, setting used threads, managing NNAPI delegate usage, GPU acceleration, XNNPack, and more
