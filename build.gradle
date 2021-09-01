@@ -1,7 +1,4 @@
-apply plugin: 'java'
-apply plugin: 'maven-publish'
 
-group = 'com.github.OutoftheBoxFTC'
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
@@ -17,6 +14,9 @@ buildscript {
 }
 
 allprojects {
+    apply plugin: 'maven-publish'
+
+    group = 'com.github.OutoftheBoxFTC'
     repositories {
         google()
         mavenCentral()
