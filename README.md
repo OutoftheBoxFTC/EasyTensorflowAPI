@@ -1,5 +1,7 @@
 # EasyTensorflowAPI
 
+[![](https://jitpack.io/v/OutoftheBoxFTC/EasyTensorflowAPI.svg)](https://jitpack.io/#OutoftheBoxFTC/EasyTensorflowAPI)
+
 An easy to use API to use Tensorflow 2.0 in FTC
 
 FIRST provides a decent Tensorflow API already packaged in the app, but it currently only supports Tensorflow 1.0 and does not expose many backend features for user customizability.
