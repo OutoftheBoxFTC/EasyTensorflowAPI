@@ -18,7 +18,7 @@ TensorObjectDetector instances are created using the 'TFODBuilder'
 
 Here is the most basic usage
 ```java
-TensorObjectDetector tfod = new TFODBuilder(hardwareMap, "model.tflite").setLabels("Label 1", "Label 2");
+TensorObjectDetector tfod = new TFODBuilder(hardwareMap, "model.tflite").setLabels("Label 1", "Label 2").build();
 ```
 
 In this example, we pass to it the hardwareMap, the name of our model in the **assets** folder of the FtcRobotController module ("model.tflite"), and the label(s) the model uses ("Label 1" and "Label 2")
