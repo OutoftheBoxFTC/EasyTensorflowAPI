@@ -3,6 +3,9 @@ package org.outoftheboxrobotics.tensorflowapi.ObjectDetection;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -22,7 +25,7 @@ import java.util.Map;
 
 public class TensorObjectDetector {
     private final Interpreter interpreter;
-    private final boolean quantized;
+    private final boolean quantized, drawOnImage;
     private final int width, height, numDetections;
 
     private final int[] intValues;
@@ -30,7 +33,7 @@ public class TensorObjectDetector {
 
     private final String[] labels;
 
-    protected TensorObjectDetector(HardwareMap map, String modelName, boolean quantized, Interpreter.Options options, String[] labels) throws IOException {
+    protected TensorObjectDetector(HardwareMap map, String modelName, boolean quantized, boolean drawOnImage, Interpreter.Options options, String[] labels) throws IOException {
         MappedByteBuffer model = loadModelFile(map.appContext.getAssets(), modelName);
         this.quantized = quantized;
 
@@ -45,6 +48,7 @@ public class TensorObjectDetector {
         this.buffer.order(ByteOrder.nativeOrder());
 
         this.labels = labels;
+        this.drawOnImage = drawOnImage;
     }
 
     /**
@@ -54,6 +58,8 @@ public class TensorObjectDetector {
      */
     public List<Detection> recognize(Bitmap bitmap){
         Bitmap clone = bitmap.copy(bitmap.getConfig(), true);
+        float imgWidth = clone.getWidth();
+        float imgHeight = clone.getHeight();
         if(bitmap.getWidth() != width || bitmap.getHeight() != height){
             //TODO: Tensorflow has a image pre-processor, validate using that over the createScaledBitmap option for performance
             clone = Bitmap.createScaledBitmap(bitmap, width, height, false);
@@ -104,17 +110,31 @@ public class TensorObjectDetector {
         //Uses min because some models will return null detections greater then numDetections
         int numDetectionsOutput = Math.min(this.numDetections, (int) numDetections[0]);
 
+        Canvas canvas = null;
+        Paint p = null;
+        if(drawOnImage){
+            canvas = new Canvas(bitmap);
+            p = new Paint();
+            p.setStyle(Paint.Style.STROKE);
+            p.setColor(Color.rgb(57, 255, 20));
+            p.setTextAlign(Paint.Align.CENTER);
+        }
+
         final ArrayList<Detection> detections = new ArrayList<>(numDetectionsOutput);
         for (int i = 0; i < numDetectionsOutput; ++i) {
             final RectF detection = new RectF(
-                            outputLocations[0][i][1] * width,
-                            outputLocations[0][i][0] * height,
-                            outputLocations[0][i][3] * width,
-                            outputLocations[0][i][2] * height);
+                            outputLocations[0][i][1] * imgWidth,
+                            outputLocations[0][i][0] * imgHeight,
+                            outputLocations[0][i][3] * imgWidth,
+                            outputLocations[0][i][2] * imgHeight);
 
             detections.add(
                     new Detection(
                             "" + i, labels[((int) outputClasses[0][i])], outputScores[0][i], detection, bitmap, timestamp));
+            if(drawOnImage){
+                canvas.drawRect(detection, p);
+                canvas.drawText(labels[((int) outputClasses[0][i])], detection.centerX(), detection.centerY(), p);
+            }
         }
         clone.recycle();
         return detections;

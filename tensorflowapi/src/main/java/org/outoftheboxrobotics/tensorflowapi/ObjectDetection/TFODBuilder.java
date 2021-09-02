@@ -3,6 +3,7 @@ package org.outoftheboxrobotics.tensorflowapi.ObjectDetection;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.outoftheboxrobotics.tensorflowapi.ImageClassification.TFICBuilder;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.CompatibilityList;
 import org.tensorflow.lite.gpu.GpuDelegate;
@@ -13,6 +14,7 @@ public class TFODBuilder {
     private final HardwareMap map;
     private final String modelName;
     private boolean quantized;
+    private boolean drawOnImage;
     private final Interpreter.Options options;
     private String[] labels;
 
@@ -23,6 +25,7 @@ public class TFODBuilder {
         options = new Interpreter.Options();
         labels = new String[0];
         options.setCancellable(true);
+        this.drawOnImage = true;
     }
 
     /**
@@ -114,7 +117,17 @@ public class TFODBuilder {
         return this;
     }
 
+    /**
+     * Sets if the API should draw detected objects on the input bitmap
+     *
+     * Warning: Can slow performance if lots of rectangles are being drawn
+     */
+    public TFODBuilder drawOnImage(boolean drawOnImage){
+        this.drawOnImage = drawOnImage;
+        return this;
+    }
+
     public TensorObjectDetector build() throws IOException {
-        return new TensorObjectDetector(map, modelName, quantized, options, labels);
+        return new TensorObjectDetector(map, modelName, quantized, drawOnImage, options, labels);
     }
 }
