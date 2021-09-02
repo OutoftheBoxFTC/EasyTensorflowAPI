@@ -24,6 +24,20 @@ How to make a Tensorflow Object Detection Model: WIP
 
 How to make a Tensorflow Image Classification Model: WIP
 
+## Installing
+Installation is simple. Just go to build.dependencies.gradle in your project and add the following
+
+```
+maven { url 'https://jitpack.io' }
+```
+
+in repositories and
+
+```
+implementation 'com.github.OutoftheBoxFTC:EasyTensorflowAPI:v1.0.0-Alpha'
+```
+
+in dependencies. Then run a gradle sync, and everything should download!
 
 ## OnBotJava:
 This library can be ported to OnBotJava, however I strongly recommend anyone using this library to use it in Android Studio to avoid a lot of pain that will come from porting it.
