@@ -88,14 +88,19 @@ public class TensorObjectDetector {
      * @return a list of detected objects in the image
      */
     public List<Detection> recognize(Mat in){
-        if(in.type() != CvType.CV_8UC3){
+        if(in.type() != CvType.CV_8UC3 && in.type() != CvType.CV_8UC4){
             throw new TensorProcessingException("At this time only mats of type CV_8UC3 are supported");
         }
 
         long timestamp = System.currentTimeMillis();
 
         Mat in_32SC3 = new Mat();
-        in.convertTo(in_32SC3, CvType.CV_32SC3);
+        if(in.type() == CvType.CV_8UC3) {
+            in.convertTo(in_32SC3, CvType.CV_32SC3);
+        }else{
+            Imgproc.cvtColor(in, in_32SC3, Imgproc.COLOR_RGBA2RGB);
+            in_32SC3.convertTo(in_32SC3, CvType.CV_32SC3);
+        }
 
         int[] data = new int[(int) (in.channels() * in.total())];
         in_32SC3.get(0, 0, data);
