@@ -10,7 +10,20 @@ import android.graphics.RectF;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.outoftheboxrobotics.tensorflowapi.TensorProcessingException;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.support.common.ops.NormalizeOp;
+import org.tensorflow.lite.support.common.ops.QuantizeOp;
+import org.tensorflow.lite.support.image.ImageProcessor;
+import org.tensorflow.lite.support.image.TensorImage;
+import org.tensorflow.lite.support.image.ops.ResizeOp;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,41 +66,53 @@ public class TensorObjectDetector {
 
     /**
      * Runs inference on a given image
+     *
+     * This method IGNORES drawOnImage!
+     *
+     * DEPRECATED: Use recognize(Mat in) instead when possible
      * @param bitmap the image to run the model on
      * @return a list of detected objects in the image
      */
+    @Deprecated
     public List<Detection> recognize(Bitmap bitmap){
-        Bitmap clone = bitmap.copy(bitmap.getConfig(), true);
-        float imgWidth = clone.getWidth();
-        float imgHeight = clone.getHeight();
-        if(bitmap.getWidth() != width || bitmap.getHeight() != height){
-            //TODO: Tensorflow has a image pre-processor, validate using that over the createScaledBitmap option for performance
-            clone = Bitmap.createScaledBitmap(bitmap, width, height, false);
-        }
+        Mat mat = new Mat();
+        Utils.bitmapToMat(bitmap, mat);
+        List<Detection> dets = recognize(mat);
+        mat.release();
+        return dets;
+    }
 
-        //preprocess image data from 0-255 int to either normalized float based or integer based
-        clone.getPixels(intValues, 0, width, 0, 0, width, height);
+    /**
+     * Runs inference on a given image
+     * @param in the image to run the model on
+     * @return a list of detected objects in the image
+     */
+    public List<Detection> recognize(Mat in){
+        if(in.type() != CvType.CV_8UC3){
+            throw new TensorProcessingException("At this time only mats of type CV_8UC3 are supported");
+        }
 
         long timestamp = System.currentTimeMillis();
 
-        buffer.rewind();
-        for(int i = 0; i < width; i ++){
-            for(int j = 0; j < height; j ++){
-                int pixel = intValues[i * width + j];
-                if(quantized){ //Quantization uses integers instead of floating point values
-                    buffer.put((byte) ((pixel >> 16) & 0xFF));
-                    buffer.put((byte) ((pixel >> 8) & 0xFF));
-                    buffer.put((byte) (pixel & 0xFF));
-                }else{ //Non quantized model uses normalized floating point values
-                    buffer.putFloat((((pixel >> 16) & 0xFF) - 127.5f) / 127.5f);
-                    buffer.putFloat((((pixel >> 8) & 0xFF) - 127.5f) / 127.5f);
-                    buffer.putFloat(((pixel & 0xFF) - 127.5f) / 127.5f);
-                }
-            }
+        Mat in_32SC3 = new Mat();
+        in.convertTo(in_32SC3, CvType.CV_32SC3);
+
+        int[] data = new int[(int) (in.channels() * in.total())];
+        in_32SC3.get(0, 0, data);
+
+        TensorImage image = new TensorImage();
+        image.load(data, new int[]{in_32SC3.width(), in_32SC3.height()});
+
+        ImageProcessor.Builder processorBuilder = new ImageProcessor.Builder()
+                .add(new ResizeOp(height, width, ResizeOp.ResizeMethod.BILINEAR));
+
+        if(quantized){
+            processorBuilder.add(new QuantizeOp(127.5f, 127.5f));
         }
 
-        //Copy input buffer into a tensorflow readable object
-        Object[] inputArray = {buffer};
+        image = processorBuilder.build().process(image);
+
+        Object[] inputArray = {image.getBuffer()};
 
         //Copy output buffers into a tensorflow readable object map
         //TODO: Verify order of operations here or make output tensor assignment automatic
@@ -110,33 +135,26 @@ public class TensorObjectDetector {
         //Uses min because some models will return null detections greater then numDetections
         int numDetectionsOutput = Math.min(this.numDetections, (int) numDetections[0]);
 
-        Canvas canvas = null;
-        Paint p = null;
-        if(drawOnImage){
-            canvas = new Canvas(bitmap);
-            p = new Paint();
-            p.setStyle(Paint.Style.STROKE);
-            p.setColor(Color.rgb(57, 255, 20));
-            p.setTextAlign(Paint.Align.CENTER);
-        }
-
         final ArrayList<Detection> detections = new ArrayList<>(numDetectionsOutput);
         for (int i = 0; i < numDetectionsOutput; ++i) {
             final RectF detection = new RectF(
-                            outputLocations[0][i][1] * imgWidth,
-                            outputLocations[0][i][0] * imgHeight,
-                            outputLocations[0][i][3] * imgWidth,
-                            outputLocations[0][i][2] * imgHeight);
+                    outputLocations[0][i][1] * in.width(),
+                    outputLocations[0][i][0] * in.height(),
+                    outputLocations[0][i][3] * in.width(),
+                    outputLocations[0][i][2] * in.height());
 
             detections.add(
                     new Detection(
-                            "" + i, labels[((int) outputClasses[0][i])], outputScores[0][i], detection, bitmap, timestamp));
+                            "" + i, labels[((int) outputClasses[0][i])], outputScores[0][i], detection, timestamp));
             if(drawOnImage){
-                canvas.drawRect(detection, p);
-                canvas.drawText(labels[((int) outputClasses[0][i])], detection.centerX(), detection.centerY(), p);
+                Rect r = new Rect(
+                        new Point((detection.right) * in.width(), (detection.top) * in.height()),
+                        new Point((detection.left) * in.width(), (detection.bottom) * in.height())
+                );
+                Imgproc.rectangle(in, r, new Scalar(57, 255, 20));
             }
         }
-        clone.recycle();
+        in_32SC3.release();
         return detections;
     }
 
@@ -159,17 +177,15 @@ public class TensorObjectDetector {
 
         private RectF location;
 
-        private final Bitmap bitmap;
 
         private final long imageTimestamp;
 
         public Detection(
-                final String id, final String title, final Float confidence, final RectF location, Bitmap bitmap, long imageTimestamp) {
+                final String id, final String title, final Float confidence, final RectF location, long imageTimestamp) {
             this.id = id;
             this.title = title;
             this.confidence = confidence;
             this.location = location;
-            this.bitmap = bitmap;
             this.imageTimestamp = imageTimestamp;
         }
 
@@ -195,10 +211,6 @@ public class TensorObjectDetector {
 
         public long getImageTimestamp() {
             return imageTimestamp;
-        }
-
-        public Bitmap getBitmap() {
-            return bitmap;
         }
 
         @Override
