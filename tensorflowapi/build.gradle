@@ -59,6 +59,7 @@ dependencies {
     compileOnly 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
     compileOnly 'org.tensorflow:tensorflow-lite-task-vision:0.1.0'
     compileOnly 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc2'
+    compileOnly 'org.tensorflow:tensorflow-lite-support:0.1.0'
 
     compileOnly 'org.openftc:easyopencv:1.4.4'
 }
