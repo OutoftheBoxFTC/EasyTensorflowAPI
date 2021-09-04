@@ -106,7 +106,7 @@ public class TensorObjectDetector {
         in_32SC3.get(0, 0, data);
 
         TensorImage image = new TensorImage();
-        image.load(data, new int[]{in_32SC3.width(), in_32SC3.height()});
+        image.load(data, new int[]{in_32SC3.height(), in_32SC3.width()});
 
         ImageProcessor.Builder processorBuilder = new ImageProcessor.Builder()
                 .add(new ResizeOp(height, width, ResizeOp.ResizeMethod.BILINEAR));
