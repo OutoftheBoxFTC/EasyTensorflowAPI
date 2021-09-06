@@ -15,6 +15,7 @@ public class TFODBuilder {
     private final String modelName;
     private boolean quantized;
     private boolean drawOnImage;
+    private float minResultConfidence = 0.6f;
     private final Interpreter.Options options;
     private String[] labels;
 
@@ -127,7 +128,19 @@ public class TFODBuilder {
         return this;
     }
 
+    /**
+     * Sets the minimum result confidence to keep an object result
+     * TFOD can sometimes return a lot of garbage detections with really low scores
+     * So this helps filter them out
+     * Confidence should be a float between 0 and 1, wtih 1 being 100% confidence and 0 being 0%
+     * Default is 0.6 (60% confidence)
+     */
+    public TFODBuilder setMinResultConfidence(float minResultConfidence) {
+        this.minResultConfidence = minResultConfidence;
+        return this;
+    }
+
     public TensorObjectDetector build() throws IOException {
-        return new TensorObjectDetector(map, modelName, quantized, drawOnImage, options, labels);
+        return new TensorObjectDetector(map, modelName, quantized, drawOnImage, minResultConfidence, options, labels);
     }
 }
