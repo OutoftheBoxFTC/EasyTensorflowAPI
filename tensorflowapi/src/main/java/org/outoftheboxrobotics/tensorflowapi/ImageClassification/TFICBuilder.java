@@ -17,12 +17,12 @@ public class TFICBuilder {
     private String[] labels;
     private int numRecognitions;
 
-    public TFICBuilder(HardwareMap map, String modelName){
+    public TFICBuilder(HardwareMap map, String modelName, String... labels){
         this.map = map;
         this.modelName = modelName;
         quantized = false;
         options = new Interpreter.Options();
-        labels = new String[0];
+        this.labels = labels;
         options.setCancellable(true);
         this.numRecognitions = 0;
     }
@@ -41,8 +41,11 @@ public class TFICBuilder {
     /**
      * Sets the labels that the model uses.
      *
+     * Deprecated: Set the labels in the constructor instead
+     *
      * This is the labels that the model use, like "ring" or "goal"
      */
+    @Deprecated
     public TFICBuilder setLabels(String... labels){
         this.labels = labels;
         return this;

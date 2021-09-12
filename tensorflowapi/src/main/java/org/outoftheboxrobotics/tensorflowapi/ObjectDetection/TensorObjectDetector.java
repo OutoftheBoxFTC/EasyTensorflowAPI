@@ -21,6 +21,7 @@ import org.opencv.imgproc.Imgproc;
 import org.outoftheboxrobotics.tensorflowapi.TensorProcessingException;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.Tensor;
 import org.tensorflow.lite.support.common.ops.CastOp;
 import org.tensorflow.lite.support.common.ops.NormalizeOp;
 import org.tensorflow.lite.support.common.ops.QuantizeOp;
@@ -48,6 +49,8 @@ public class TensorObjectDetector {
 
     private final String[] labels;
 
+    private int locationsIndex = -1, classesIndex = -1, scoresIndex = -1, numDetectIndex = -1;
+
     protected TensorObjectDetector(HardwareMap map, String modelName, boolean quantized, boolean drawOnImage, float minConfidence, Interpreter.Options options, String[] labels) throws IOException {
         MappedByteBuffer model = loadModelFile(map.appContext.getAssets(), modelName);
         this.quantized = quantized;
@@ -57,6 +60,25 @@ public class TensorObjectDetector {
         this.width = this.interpreter.getInputTensor(0).shape()[1];
         this.height = this.interpreter.getInputTensor(0).shape()[2];
         this.numDetections = this.interpreter.getOutputTensor(0).shape()[1];
+
+        int count = this.interpreter.getOutputTensorCount();
+        for(int i = 0; i < count; i ++){
+            Tensor tensor = this.interpreter.getOutputTensor(i);
+            if(tensor.shape().length == 3){
+                locationsIndex = i;
+            }
+            if(tensor.shape().length == 1){
+                numDetectIndex = i;
+            }
+            if(tensor.shape().length == 2){
+                //Two tensors have length 2, so we just kinda guess and let the algo figure it out later
+                if(classesIndex == -1){
+                    classesIndex = i;
+                }else{
+                    scoresIndex = i;
+                }
+            }
+        }
 
         //The number of bytes in the input tensor should equal the number of bytes to allocate
         if(this.interpreter.getInputTensor(0).numBytes() != (this.width * this.height * 3 * (quantized ? 1 : 4))){
@@ -152,10 +174,10 @@ public class TensorObjectDetector {
         //TODO: Verify order of operations here or make output tensor assignment automatic
         //This is the most common order of output tensors, but there have been models with different output tensor orders
         Map<Integer, Object> outputMap = new HashMap<>();
-        outputMap.put(0, outputLocations);
-        outputMap.put(1, outputClasses);
-        outputMap.put(2, outputScores);
-        outputMap.put(3, numDetections);
+        outputMap.put(locationsIndex, outputLocations);
+        outputMap.put(classesIndex, outputClasses);
+        outputMap.put(scoresIndex, outputScores);
+        outputMap.put(numDetectIndex, numDetections);
 
         //Run inference
         interpreter.runForMultipleInputsOutputs(inputArray, outputMap);
@@ -164,7 +186,7 @@ public class TensorObjectDetector {
         //Uses min because some models will return null detections greater then numDetections
         int numDetectionsOutput = Math.min(this.numDetections, (int) numDetections[0]);
 
-        float[][] tmp = new float[1][this.numDetections];
+        float[][] tmp;
         float maxClass = 0, maxScore = 0;
         boolean checkScores = false, swap = true;
         for(int i = 0; i < numDetectionsOutput; i ++){
@@ -197,6 +219,7 @@ public class TensorObjectDetector {
 
         final ArrayList<Detection> detections = new ArrayList<>(numDetectionsOutput);
         for (int i = 0; i < numDetectionsOutput; ++i) {
+            RobotLog.ii("TFLite", ""+outputScores[0][i] + " | " + outputClasses[0][i]);
             if(outputScores[0][i] > minConfidence) {
                 //TF outputs location as a number from 0-1 for width and height, most TF apis scale this to the internal model size
                 //I.E 300x300, but this does not make sense in this context, so we scale them to the input image size

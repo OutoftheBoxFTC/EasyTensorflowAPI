@@ -19,12 +19,12 @@ public class TFODBuilder {
     private final Interpreter.Options options;
     private String[] labels;
 
-    public TFODBuilder(HardwareMap map, String modelName){
+    public TFODBuilder(HardwareMap map, String modelName, String... labels){
         this.map = map;
         this.modelName = modelName;
         quantized = false;
         options = new Interpreter.Options();
-        labels = new String[0];
+        this.labels = labels;
         options.setCancellable(true);
         this.drawOnImage = true;
     }
@@ -43,8 +43,11 @@ public class TFODBuilder {
     /**
      * Sets the labels that the model uses.
      *
+     * Deprecated: Set the labels in the constructor instead
+     *
      * This is the labels that the model use, like "ring" or "goal"
      */
+    @Deprecated
     public TFODBuilder setLabels(String... labels){
         this.labels = labels;
         return this;
@@ -80,7 +83,7 @@ public class TFODBuilder {
      * NNAPI requires backend architecture to allow for acceleration
      * The FTC Control Hub seems to allow for NNAPI acceleration
      */
-    public TFODBuilder useNNAPI(){ //TODO: Test if the FTC Control Hub supports NNAPI acceleration
+    public TFODBuilder useNNAPI(){ //TODO: Test if the FTC Control Hub supports NNAPI acceleration (initial tests seems it doesn't?)
         this.options.setUseNNAPI(true);
         return this;
     }
@@ -109,7 +112,10 @@ public class TFODBuilder {
         CompatibilityList compatList = new CompatibilityList();
 
         if(compatList.isDelegateSupportedOnThisDevice()){
-            GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
+            GpuDelegate.Options delegateOptions = new GpuDelegate.Options();
+            delegateOptions.setPrecisionLossAllowed(false);
+            delegateOptions.setInferencePreference(GpuDelegate.Options.INFERENCE_PREFERENCE_SUSTAINED_SPEED);
+            delegateOptions.setQuantizedModelsAllowed(true);
             GpuDelegate gpuDelegate = new GpuDelegate(delegateOptions);
             options.addDelegate(gpuDelegate);
         } else {
