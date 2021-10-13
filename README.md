@@ -10,7 +10,7 @@ In addition, due to the nature of tensorflow models, being able to see the imple
 
 ## Disclaimer
 
-As of right now, the Tensor Image Classification system is UNTESTED, testing will come soon.
+As of right now, the Tensor Image Classification system is only partiall tested, testing will come soon.
 
 ## Current Features:
 EasyTensorflowAPI currently supports both tensorflow object detection and tensorflow image classification models in the form of a .tflite model
