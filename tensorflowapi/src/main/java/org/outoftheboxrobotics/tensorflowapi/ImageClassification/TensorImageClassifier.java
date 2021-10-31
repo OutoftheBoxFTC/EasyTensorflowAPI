@@ -7,6 +7,10 @@ import android.graphics.RectF;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import org.outoftheboxrobotics.tensorflowapi.TensorProcessingException;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.support.common.TensorProcessor;
@@ -76,9 +80,62 @@ public class TensorImageClassifier {
 
     /**
      * Runs inference on a given image
-     * @param bitmap the image to run the model on
+     * @param in the image to run the model on
      * @return a list possible recognitions for the image
      */
+
+    public List<Recognition> recognize(Mat in){
+        if(in.type() != CvType.CV_8UC3 && in.type() != CvType.CV_8UC4){
+            //While some models *technically* have grayscale inputs
+            //All official TFOD models require three channels of image input
+            //We could convert grayscale images to 3 channel, but there is no standard
+            //So we would be guessing if the model wants single, double, or triple channel grayscale
+            //We could try to guess, but iterating through a NN to find that would take an unreasonable amount of time
+            //The specific type of mat is to prevent data casting type errors
+            throw new TensorProcessingException("At this time only mats of type CV_8UC3 are supported");
+        }
+
+        long timestamp = System.currentTimeMillis();
+
+        Mat in_32SC3 = new Mat();
+        if(in.channels() == 3) {
+            //Cast to integer type for processing
+            in.convertTo(in_32SC3, CvType.CV_32SC3);
+        }else{
+            //TFOD models do not process Alpha data, so we need to get rid of the fourth channel
+            //For some reason EOCV passes four channel mats even though most cameras
+            //Do not have an alpha channel ¯\_(ツ)_/¯
+            Imgproc.cvtColor(in, in_32SC3, Imgproc.COLOR_RGBA2RGB);
+            in_32SC3.convertTo(in_32SC3, CvType.CV_32SC3);
+        }
+
+        int[] data = new int[(int) (in_32SC3.channels() * in_32SC3.total())];
+        in_32SC3.get(0, 0, data);
+        inputImageBuffer.load(data, new int[]{in_32SC3.width(), in_32SC3.height(), in_32SC3.channels()}); //TF Size is width, height, channels
+
+        ImageProcessor imageProcessor = new ImageProcessor.Builder()
+                .add(new ResizeOp(height, width, ResizeOp.ResizeMethod.BILINEAR))
+                .add(quantized ? new NormalizeOp(0, 1) : new NormalizeOp(127.5f, 127.5f)).build();
+        inputImageBuffer = imageProcessor.process(inputImageBuffer);
+
+        interpreter.run(inputImageBuffer.getBuffer(), outputProbabilityBuffer.getBuffer().rewind());
+
+        Map<String, Float> labeledProbability = new TensorLabel(Arrays.asList(labels), probabilityProcessor.process(outputProbabilityBuffer)).getMapWithFloatValue();
+        PriorityQueue<Recognition> pq = new PriorityQueue<>(numRecognitions, (o1, o2) -> Float.compare(o2.getConfidence(), o1.getConfidence()));
+
+        for(Map.Entry<String, Float> entry : labeledProbability.entrySet()){
+            pq.add(new Recognition("" + entry.getKey(), entry.getKey(), entry.getValue()));
+        }
+
+        ArrayList<Recognition> recognitions = new ArrayList<>();
+        int recogSize = Math.min(pq.size(), numRecognitions);
+        for(int i = 0; i < recogSize; i ++){
+            recognitions.add(pq.poll());
+        }
+        return recognitions;
+    }
+
+    @Deprecated
     public List<Recognition> recognize(Bitmap bitmap){
         inputImageBuffer.load(bitmap);
 
