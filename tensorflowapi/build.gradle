@@ -55,11 +55,10 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.1.0'
 
     implementation 'org.firstinspires.ftc:RobotCore:7.0.0'
-    api 'org.tensorflow:tensorflow-lite:2.6.0'
     api 'org.tensorflow:tensorflow-lite-gpu:2.6.0'
     api 'org.tensorflow:tensorflow-lite-task-vision:0.1.0'
     api 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc2'
     api 'org.tensorflow:tensorflow-lite-support:0.1.0'
 
-    compileOnly 'org.openftc:easyopencv:1.5.0'
+    compileOnly 'org.openftc:opencv-repackaged:4.5.3-B'
 }
