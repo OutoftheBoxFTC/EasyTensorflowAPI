@@ -221,13 +221,13 @@ public class TensorObjectDetector {
         for (int i = 0; i < numDetectionsOutput; ++i) {
             RobotLog.ii("TFLite", ""+outputScores[0][i] + " | " + outputClasses[0][i]);
             if(outputScores[0][i] > minConfidence) {
-                //TF outputs location as a number from 0-1 for width and height, most TF apis scale this to the internal model size
+                //TF outputs location as a number from 0-{INPUT_WIDTH} for width and height, most TF apis scale this to the internal model size
                 //I.E 300x300, but this does not make sense in this context, so we scale them to the input image size
                 final RectF detection = new RectF(
-                        outputLocations[0][i][1] * in.width(),
-                        outputLocations[0][i][0] * in.height(),
-                        outputLocations[0][i][3] * in.width(),
-                        outputLocations[0][i][2] * in.height());
+                        (outputLocations[0][i][1] / width) * in.width(),
+                        (outputLocations[0][i][0] / height) * in.height(),
+                        (outputLocations[0][i][3] / width) * in.width(),
+                        (outputLocations[0][i][2] / height) * in.height());
 
                 detections.add(
                         new Detection(
