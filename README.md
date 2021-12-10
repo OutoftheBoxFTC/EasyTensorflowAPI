@@ -38,7 +38,7 @@ maven { url 'https://jitpack.io' }
 in repositories and
 
 ```
-implementation 'com.github.OutoftheBoxFTC:EasyTensorflowAPI:v1.0.7-Alpha'
+implementation 'com.github.OutoftheBoxFTC:EasyTensorflowAPI:v1.1.0-Alpha'
 ```
 
 in dependencies. Then run a gradle sync, and everything should download!
